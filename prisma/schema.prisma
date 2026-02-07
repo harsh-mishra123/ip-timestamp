@@ -1,0 +1,22 @@
+// prisma/schema.prisma
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  wallet    String?  @unique
+  documents Document[]
+  createdAt DateTime @default(now())
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  hash      String   @unique
+  txHash    String?  // Ethereum transaction
+  arweaveId String?  // Arweave file ID
+  fileUrl   String?
+  metadata  Json
+  createdAt DateTime @default(now())
+}
