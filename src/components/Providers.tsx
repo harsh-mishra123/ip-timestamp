@@ -7,15 +7,21 @@ import { sepolia } from 'wagmi/chains';
 import { publicProvider } from 'wagmi/providers/public';
 import '@rainbow-me/rainbowkit/styles.css';
 
-const { chains, publicClient } = configureChains(
-  [sepolia],
-  [publicProvider()]
-);
+const { chains, publicClient } = configureChains([sepolia], [publicProvider()]);
+
+const walletConnectProjectId =
+  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '';
+
+if (!walletConnectProjectId) {
+  console.warn(
+    'Missing NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID. Set it in .env.local to enable WalletConnect.'
+  );
+}
 
 const { connectors } = getDefaultWallets({
   appName: 'IP Timestamp',
-  projectId: 'YOUR_PROJECT_ID', // TODO: Get a Project ID from https://cloud.walletconnect.com
-  chains
+  projectId: walletConnectProjectId,
+  chains,
 });
 
 const wagmiConfig = createConfig({

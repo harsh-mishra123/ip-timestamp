@@ -1,23 +1,19 @@
 // lib/blockchain.ts
+import type { WalletClient } from 'viem';
 import { publicClient, timestampContract } from './ethereum';
 
-export async function timestampOnChain(hash: string) {
+export async function timestampOnChain(hash: string, walletClient: WalletClient) {
   try {
-    // For MVP, we'll simulate. Replace with actual wallet connection
-    console.log(`Would timestamp hash: ${hash} on blockchain`);
-    
-    // In production:
-    // const walletClient = createWalletClient(...);
-    // const hash = await walletClient.writeContract({
-    //   ...timestampContract,
-    //   functionName: 'timestampDocument',
-    //   args: [hash],
-    //   account: userAddress,
-    // });
-    
+    const txHash = await walletClient.writeContract({
+      ...timestampContract,
+      functionName: 'timestampDocument',
+      args: [hash],
+      account: walletClient.account,
+    });
+
     return {
       success: true,
-      txHash: '0xsimulated' // Replace with actual tx hash
+      txHash,
     };
   } catch (error) {
     console.error('Blockchain timestamp failed:', error);

@@ -1,15 +1,28 @@
 // app/timestamp/page.tsx
 'use client';
 
-import { useState } from 'react';
-import { useAccount } from 'wagmi';
-import { Upload, FileText, Hash, ExternalLink } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useAccount, useWalletClient } from 'wagmi';
+import { sepolia } from 'viem/chains';
+import { Upload, FileText, Hash, ExternalLink, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { timestampOnChain } from '@/lib/blockchain';
 
 export default function TimestampPage() {
   const [file, setFile] = useState<File | null>(null);
   const [hash, setHash] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const { isConnected } = useAccount();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [txHash, setTxHash] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const { isConnected, chainId } = useAccount();
+  const { data: walletClient } = useWalletClient();
+
+  const hashBytes32 = useMemo(() => {
+    if (!hash) return '';
+    const trimmed = hash.startsWith('0x') ? hash.slice(2) : hash;
+    if (trimmed.length !== 64) return '';
+    return `0x${trimmed}` as `0x${string}`;
+  }, [hash]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = e.target.files?.[0];
@@ -29,10 +42,31 @@ export default function TimestampPage() {
   };
 
   const handleTimestamp = async () => {
-    if (!hash || !isConnected) return;
-    
-    // TODO: Integrate with your smart contract
-    console.log('Would timestamp hash:', hash);
+    if (!hashBytes32 || !isConnected || !walletClient) return;
+
+    setError('');
+    setTxHash('');
+    setIsSubmitting(true);
+
+    const activeChainId =
+      walletClient?.chain?.id ??
+      chainId ??
+      (await walletClient.getChainId());
+
+    if (activeChainId !== sepolia.id) {
+      setIsSubmitting(false);
+      setError('Please switch your wallet to the Sepolia testnet.');
+      return;
+    }
+
+    const result = await timestampOnChain(hashBytes32, walletClient);
+    if (result.success) {
+      setTxHash(result.txHash);
+    } else {
+      setError(result.error || 'Transaction failed. Please try again.');
+    }
+
+    setIsSubmitting(false);
   };
 
   return (
@@ -125,11 +159,40 @@ export default function TimestampPage() {
                   
                   <button
                     onClick={handleTimestamp}
-                    disabled={!isConnected}
+                    disabled={!isConnected || !hashBytes32 || isSubmitting}
                     className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-800 disabled:cursor-not-allowed rounded-lg font-medium transition-colors"
                   >
-                    {isConnected ? 'Timestamp on Blockchain' : 'Connect Wallet to Continue'}
+                    {isSubmitting
+                      ? 'Submitting Transaction...'
+                      : isConnected
+                      ? 'Timestamp on Blockchain'
+                      : 'Connect Wallet to Continue'}
                   </button>
+
+                  {error && (
+                    <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
+                      <AlertTriangle className="mt-0.5 h-4 w-4" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  {txHash && (
+                    <div className="mt-4 flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4" />
+                      <div className="space-y-1">
+                        <p>Transaction sent. It can take a minute to confirm.</p>
+                        <a
+                          href={`https://sepolia.etherscan.io/tx/${txHash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-emerald-200 hover:text-white"
+                        >
+                          View transaction
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8 text-zinc-500">
