@@ -1,7 +1,7 @@
 // app/verify/page.tsx
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { Search, CheckCircle, XCircle, ExternalLink, AlertTriangle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -30,7 +30,7 @@ export default function VerifyPage() {
     return `0x${trimmed}` as `0x${string}`;
   }, [hash]);
 
-  const handleVerify = async () => {
+  const handleVerify = useCallback(async () => {
     if (!hashBytes32) return;
 
     setError('');
@@ -68,7 +68,7 @@ export default function VerifyPage() {
     } finally {
       setIsVerifying(false);
     }
-  };
+  }, [addDocument, address, hashBytes32]);
 
   useEffect(() => {
     const hashParam = searchParams.get('hash');
@@ -82,7 +82,7 @@ export default function VerifyPage() {
     if (!hashParam || !hashBytes32 || hasAutoVerified.current) return;
     hasAutoVerified.current = true;
     void handleVerify();
-  }, [searchParams, hashBytes32]);
+  }, [searchParams, hashBytes32, handleVerify]);
 
   return (
     <main className="min-h-screen pt-32 pb-20">

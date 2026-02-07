@@ -117,7 +117,7 @@ export default function TimestampPage() {
     <main className="min-h-screen pt-32 pb-20">
       <div className="max-w-4xl mx-auto px-6">
         <h1 className="text-4xl md:text-5xl font-bold mb-4">Timestamp Document</h1>
-        <p className="text-zinc-400 mb-12">Create an immutable proof of your file's existence on the blockchain</p>
+        <p className="text-zinc-400 mb-12">Create an immutable proof of your file&apos;s existence on the blockchain</p>
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Upload Section */}
