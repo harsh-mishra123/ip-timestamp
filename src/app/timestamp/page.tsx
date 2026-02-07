@@ -17,7 +17,7 @@ export default function TimestampPage() {
   const [txHash, setTxHash] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [txStatus, setTxStatus] = useState<'idle' | 'pending' | 'confirmed' | 'failed'>('idle');
-  const { isConnected, chainId, address } = useAccount();
+  const { isConnected, address } = useAccount();
   const { data: walletClient } = useWalletClient();
   const addDocument = useDocumentsStore((state) => state.addDocument);
   const isMounted = useRef(true);
@@ -62,7 +62,6 @@ export default function TimestampPage() {
 
     const activeChainId =
       walletClient?.chain?.id ??
-      chainId ??
       (await walletClient.getChainId());
 
     if (activeChainId !== sepolia.id) {
