@@ -1,8 +1,13 @@
 // app/verify/page.tsx
 'use client';
 
-import { useState } from 'react';
-import { Search, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAccount } from 'wagmi';
+import { Search, CheckCircle, XCircle, ExternalLink, AlertTriangle } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { getDocumentOnChain } from '@/lib/blockchain';
+import { timestampContract } from '@/lib/ethereum';
+import { useDocumentsStore } from '@/lib/documents-store';
 
 export default function VerifyPage() {
   const [hash, setHash] = useState('');
@@ -11,18 +16,73 @@ export default function VerifyPage() {
     timestamp?: number;
     owner?: string;
   } | null>(null);
+  const [error, setError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const { address } = useAccount();
+  const addDocument = useDocumentsStore((state) => state.addDocument);
+  const searchParams = useSearchParams();
+  const hasAutoVerified = useRef(false);
+
+  const hashBytes32 = useMemo(() => {
+    if (!hash) return '';
+    const trimmed = hash.startsWith('0x') ? hash.slice(2) : hash;
+    if (trimmed.length !== 64) return '';
+    return `0x${trimmed}` as `0x${string}`;
+  }, [hash]);
 
   const handleVerify = async () => {
-    if (!hash.trim()) return;
-    
-    // TODO: Integrate with smart contract verification
-    // Mock response for now
-    setVerificationResult({
-      verified: Math.random() > 0.5,
-      timestamp: Date.now() / 1000 - Math.random() * 86400,
-      owner: '0x742d35Cc6634C0532925a3b844Bc9e...'
-    });
+    if (!hashBytes32) return;
+
+    setError('');
+    setIsVerifying(true);
+    try {
+      const doc = await getDocumentOnChain(hashBytes32);
+      const verified = doc.timestamp > 0;
+
+      setVerificationResult({
+        verified,
+        timestamp: doc.timestamp,
+        owner: doc.owner,
+      });
+
+      if (verified) {
+        const createdAt = Date.now();
+        const viewerAddress = address || 'guest';
+        const documentId = `${viewerAddress}-${hashBytes32}-verify`;
+
+        addDocument({
+          id: documentId,
+          name: 'Verified Hash',
+          hash: hashBytes32,
+          timestamp: doc.timestamp,
+          owner: doc.owner,
+          source: 'verify',
+          createdAt,
+          viewerAddress,
+        });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || 'Verification failed. Please try again.');
+      setVerificationResult(null);
+    } finally {
+      setIsVerifying(false);
+    }
   };
+
+  useEffect(() => {
+    const hashParam = searchParams.get('hash');
+    if (hashParam && !hash) {
+      setHash(hashParam);
+    }
+  }, [searchParams, hash]);
+
+  useEffect(() => {
+    const hashParam = searchParams.get('hash');
+    if (!hashParam || !hashBytes32 || hasAutoVerified.current) return;
+    hasAutoVerified.current = true;
+    void handleVerify();
+  }, [searchParams, hashBytes32]);
 
   return (
     <main className="min-h-screen pt-32 pb-20">
@@ -53,11 +113,19 @@ export default function VerifyPage() {
               
               <button
                 onClick={handleVerify}
-                className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                disabled={!hashBytes32 || isVerifying}
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-800 disabled:cursor-not-allowed rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <Search className="w-4 h-4" />
-                Verify on Blockchain
+                {isVerifying ? 'Verifying...' : 'Verify on Blockchain'}
               </button>
+
+              {error && (
+                <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
+                  <AlertTriangle className="mt-0.5 h-4 w-4" />
+                  <span>{error}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -100,10 +168,15 @@ export default function VerifyPage() {
                     </div>
                   </div>
                   
-                  <button className="w-full py-3 border border-white/10 hover:bg-white/5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                  <a
+                    href={`https://sepolia.etherscan.io/address/${timestampContract.address}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-3 border border-white/10 hover:bg-white/5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  >
                     View on Etherscan
                     <ExternalLink className="w-4 h-4" />
-                  </button>
+                  </a>
                 </div>
               )}
             </div>

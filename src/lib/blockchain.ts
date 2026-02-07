@@ -32,3 +32,18 @@ export async function verifyOnChain(hash: string) {
   
   return Number(timestamp);
 }
+
+export async function getDocumentOnChain(hash: string) {
+  const hexHash = (hash.startsWith('0x') ? hash : `0x${hash}`) as `0x${string}`;
+  const document = await publicClient.readContract({
+    ...timestampContract,
+    functionName: 'documents',
+    args: [hexHash],
+  });
+
+  return {
+    hash: document[0] as `0x${string}`,
+    timestamp: Number(document[1]),
+    owner: document[2] as `0x${string}`,
+  };
+}

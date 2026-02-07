@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
   ArrowRight,
   Shield,
@@ -16,34 +15,6 @@ import {
 export default function Home() {
   return (
     <main className="min-h-screen bg-black text-white selection:bg-blue-500 selection:text-white">
-      {/* ================= NAVIGATION ================= */}
-      <nav className="fixed w-full z-50 border-b border-white/10 bg-black/50 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center font-bold text-xl">
-              P
-            </div>
-            <span className="font-bold text-xl tracking-tight">
-              ProofOfWork
-            </span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-400">
-            <Link href="/timestamp" className="hover:text-white transition-colors">
-              Timestamp
-            </Link>
-            <Link href="/verify" className="hover:text-white transition-colors">
-              Verify
-            </Link>
-            <Link href="/dashboard" className="hover:text-white transition-colors">
-              Dashboard
-            </Link>
-          </div>
-
-          <ConnectButton />
-        </div>
-      </nav>
-
       {/* ================= HERO ================= */}
       <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">

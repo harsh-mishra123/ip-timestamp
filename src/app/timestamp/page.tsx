@@ -1,11 +1,13 @@
 // app/timestamp/page.tsx
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
 import { sepolia } from 'viem/chains';
 import { Upload, FileText, Hash, ExternalLink, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { timestampOnChain } from '@/lib/blockchain';
+import { publicClient } from '@/lib/ethereum';
+import { useDocumentsStore } from '@/lib/documents-store';
 
 export default function TimestampPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -14,8 +16,17 @@ export default function TimestampPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [txHash, setTxHash] = useState<string>('');
   const [error, setError] = useState<string>('');
-  const { isConnected, chainId } = useAccount();
+  const [txStatus, setTxStatus] = useState<'idle' | 'pending' | 'confirmed' | 'failed'>('idle');
+  const { isConnected, chainId, address } = useAccount();
   const { data: walletClient } = useWalletClient();
+  const addDocument = useDocumentsStore((state) => state.addDocument);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const hashBytes32 = useMemo(() => {
     if (!hash) return '';
@@ -46,6 +57,7 @@ export default function TimestampPage() {
 
     setError('');
     setTxHash('');
+    setTxStatus('idle');
     setIsSubmitting(true);
 
     const activeChainId =
@@ -61,7 +73,39 @@ export default function TimestampPage() {
 
     const result = await timestampOnChain(hashBytes32, walletClient);
     if (result.success) {
+      const createdAt = Date.now();
+      const viewerAddress = address || 'guest';
+      const name = file?.name || 'Untitled Document';
+      const documentId = `${viewerAddress}-${hashBytes32}-timestamp`;
+
+      addDocument({
+        id: documentId,
+        name,
+        hash: hashBytes32,
+        timestamp: Math.floor(createdAt / 1000),
+        owner: address,
+        txHash: result.txHash,
+        source: 'timestamp',
+        createdAt,
+        viewerAddress,
+      });
+
       setTxHash(result.txHash);
+      setTxStatus('pending');
+      void (async () => {
+        try {
+          await publicClient.waitForTransactionReceipt({ hash: result.txHash });
+          if (isMounted.current) {
+            setTxStatus('confirmed');
+          }
+        } catch (err) {
+          if (isMounted.current) {
+            setTxStatus('failed');
+            const message = err instanceof Error ? err.message : String(err);
+            setError(message || 'Transaction failed to confirm.');
+          }
+        }
+      })();
     } else {
       setError(result.error || 'Transaction failed. Please try again.');
     }
@@ -180,7 +224,13 @@ export default function TimestampPage() {
                     <div className="mt-4 flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200">
                       <CheckCircle2 className="mt-0.5 h-4 w-4" />
                       <div className="space-y-1">
-                        <p>Transaction sent. It can take a minute to confirm.</p>
+                        <p>
+                          {txStatus === 'confirmed'
+                            ? 'Transaction confirmed on-chain.'
+                            : txStatus === 'failed'
+                            ? 'Transaction failed to confirm. Check the explorer.'
+                            : 'Transaction sent. It can take a minute to confirm.'}
+                        </p>
                         <a
                           href={`https://sepolia.etherscan.io/tx/${txHash}`}
                           target="_blank"

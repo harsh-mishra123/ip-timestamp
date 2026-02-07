@@ -1,38 +1,20 @@
 // app/dashboard/page.tsx
 'use client';
 
+import { useMemo, useState } from 'react';
 import { useAccount } from 'wagmi';
-import { FileText, Clock, Hash, Copy } from 'lucide-react';
-import { useState } from 'react';
-
-// Mock data - replace with actual contract calls
-const mockDocuments = [
-  {
-    id: 1,
-    name: 'Business_Plan.pdf',
-    hash: '0x4f8b1c8a3d...e9f2a1b5c7d',
-    timestamp: '2024-01-15 14:30:22',
-    txHash: '0xabc123...def456'
-  },
-  {
-    id: 2,
-    name: 'Patent_Sketch.jpg',
-    hash: '0x9a2b3c4d5e...f6g7h8i9j0k',
-    timestamp: '2024-01-10 09:15:47',
-    txHash: '0xdef456...ghi789'
-  },
-  {
-    id: 3,
-    name: 'Source_Code.zip',
-    hash: '0x1l2m3n4o5p...q6r7s8t9u0v',
-    timestamp: '2024-01-05 16:45:12',
-    txHash: '0xghi789...jkl012'
-  }
-];
+import { FileText, Clock, Hash, Copy, ExternalLink } from 'lucide-react';
+import { useDocumentsStore } from '@/lib/documents-store';
 
 export default function DashboardPage() {
   const { address, isConnected } = useAccount();
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
+  const documents = useDocumentsStore((state) => state.documents);
+
+  const filteredDocuments = useMemo(() => {
+    if (!address) return [];
+    return documents.filter((doc) => doc.viewerAddress === address);
+  }, [documents, address]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -62,12 +44,12 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold">{mockDocuments.length}</div>
+            <div className="text-2xl font-bold">{filteredDocuments.length}</div>
             <div className="text-sm text-zinc-400">Total Documents</div>
           </div>
         </div>
 
-        {mockDocuments.length === 0 ? (
+        {filteredDocuments.length === 0 ? (
           <div className="text-center py-16 border-2 border-dashed border-white/10 rounded-2xl">
             <FileText className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
             <h3 className="text-xl font-bold mb-2">No documents yet</h3>
@@ -81,7 +63,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="grid gap-6">
-            {mockDocuments.map((doc) => (
+            {filteredDocuments.map((doc) => (
               <div
                 key={doc.id}
                 className="p-6 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
@@ -96,7 +78,7 @@ export default function DashboardPage() {
                       <div className="flex flex-wrap gap-4 text-sm text-zinc-400">
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {doc.timestamp}
+                          {new Date(doc.timestamp * 1000).toLocaleString()}
                         </div>
                         <div className="flex items-center gap-1">
                           <Hash className="w-3 h-3" />
@@ -122,14 +104,26 @@ export default function DashboardPage() {
                     >
                       Verify
                     </a>
-                    <a
-                      href={`https://sepolia.etherscan.io/tx/${doc.txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium text-sm transition-colors"
-                    >
-                      View Transaction
-                    </a>
+                    {doc.txHash ? (
+                      <a
+                        href={`https://sepolia.etherscan.io/tx/${doc.txHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium text-sm transition-colors"
+                      >
+                        View Transaction
+                      </a>
+                    ) : (
+                      <a
+                        href={`https://sepolia.etherscan.io/address/${doc.owner}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 border border-white/10 hover:bg-white/5 rounded-lg font-medium text-sm transition-colors flex items-center gap-2"
+                      >
+                        Owner
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
