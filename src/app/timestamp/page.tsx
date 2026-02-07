@@ -71,6 +71,18 @@ export default function TimestampPage() {
     }
 
     const result = await timestampOnChain(hashBytes32, walletClient);
+    if (!result.success) {
+      setError(result.error || 'Transaction failed. Please try again.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!result.txHash) {
+      setError('Transaction hash missing. Please try again.');
+      setIsSubmitting(false);
+      return;
+    }
+
     if (result.success) {
       const createdAt = Date.now();
       const viewerAddress = address || 'guest';
@@ -105,10 +117,6 @@ export default function TimestampPage() {
           }
         }
       })();
-    } else {
-      setError(result.error || 'Transaction failed. Please try again.');
-    }
-
     setIsSubmitting(false);
   };
 

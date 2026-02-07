@@ -2,7 +2,14 @@
 import type { WalletClient } from 'viem';
 import { publicClient, timestampContract } from './ethereum';
 
-export async function timestampOnChain(hash: string, walletClient: WalletClient) {
+type TimestampResult =
+  | { success: true; txHash: `0x${string}` }
+  | { success: false; error: string };
+
+export async function timestampOnChain(
+  hash: string,
+  walletClient: WalletClient
+): Promise<TimestampResult> {
   try {
     const txHash = await walletClient.writeContract({
       ...timestampContract,
