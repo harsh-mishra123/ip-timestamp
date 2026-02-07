@@ -56,7 +56,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between mb-12">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-2">Your Documents</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-2">Your Documents Here</h1>
             <p className="text-zinc-400">
               Wallet: <span className="font-mono text-sm">{address?.slice(0, 12)}...{address?.slice(-8)}</span>
             </p>
