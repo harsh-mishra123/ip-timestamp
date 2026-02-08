@@ -186,8 +186,13 @@ export default function Home() {
               <Github className="w-4 h-4" />
               GitHub
             </Link>
-            <Link href="#" className="hover:text-white flex items-center gap-1">
-              Smart Contract
+            <Link
+              href="https://sepolia.etherscan.io/address/0x4A6E96Cd661029dB4715038bA2DC62935D16FA4a"
+              className="hover:text-white flex items-center gap-1"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View Contract
               <ExternalLink className="w-4 h-4" />
             </Link>
           </div>
