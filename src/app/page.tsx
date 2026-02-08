@@ -182,7 +182,7 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-6">
-            <Link href="#" className="hover:text-white flex items-center gap-1">
+            <Link href="https://github.com/harsh-mishra123" className="hover:text-white flex items-center gap-1">
               <Github className="w-4 h-4" />
               GitHub
             </Link>
