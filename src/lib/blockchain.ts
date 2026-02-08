@@ -1,5 +1,6 @@
 // lib/blockchain.ts
 import type { WalletClient } from 'viem';
+import { sepolia } from 'viem/chains';
 import { publicClient, timestampContract } from './ethereum';
 
 type TimestampResult =
@@ -8,14 +9,17 @@ type TimestampResult =
 
 export async function timestampOnChain(
   hash: string,
-  walletClient: WalletClient
+  walletClient: WalletClient,
+  account: `0x${string}`
 ): Promise<TimestampResult> {
   try {
+    const hexHash = (hash.startsWith('0x') ? hash : `0x${hash}`) as `0x${string}`;
     const txHash = await walletClient.writeContract({
       ...timestampContract,
+      chain: sepolia,
       functionName: 'timestampDocument',
-      args: [hash],
-      account: walletClient.account,
+      args: [hexHash],
+      account,
     });
 
     return {

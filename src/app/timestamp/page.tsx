@@ -53,7 +53,7 @@ export default function TimestampPage() {
   };
 
   const handleTimestamp = async () => {
-    if (!hashBytes32 || !isConnected || !walletClient) return;
+    if (!hashBytes32 || !isConnected || !walletClient || !address) return;
 
     setError('');
     setTxHash('');
@@ -70,7 +70,7 @@ export default function TimestampPage() {
       return;
     }
 
-    const result = await timestampOnChain(hashBytes32, walletClient);
+    const result = await timestampOnChain(hashBytes32, walletClient, address as `0x${string}`);
     if (!result.success) {
       setError(result.error || 'Transaction failed. Please try again.');
       setIsSubmitting(false);
@@ -117,6 +117,8 @@ export default function TimestampPage() {
           }
         }
       })();
+    }
+
     setIsSubmitting(false);
   };
 
