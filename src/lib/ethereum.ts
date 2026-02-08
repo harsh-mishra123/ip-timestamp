@@ -2,9 +2,14 @@
 import { createPublicClient, http, createWalletClient } from 'viem';
 import { sepolia } from 'viem/chains';
 
+const sepoliaRpcUrl =
+  process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL ||
+  process.env.NEXT_PUBLIC_RPC_URL ||
+  undefined;
+
 export const publicClient = createPublicClient({
   chain: sepolia,
-  transport: http()
+  transport: http(sepoliaRpcUrl)
 });
 
 // Simple contract for timestamping

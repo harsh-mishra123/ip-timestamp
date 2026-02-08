@@ -1,5 +1,18 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment Variables
+
+Set these variables in your local .env.local and in your deployment environment:
+
+```
+DATABASE_URL=
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
+NEXT_PUBLIC_SEPOLIA_RPC_URL=
+WEB3_STORAGE_TOKEN=
+NEXTAUTH_SECRET=
+NEXTAUTH_URL=
+```
+
 ## Getting Started
 
 First, run the development server:
